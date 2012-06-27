@@ -120,10 +120,10 @@ def write_frame(frame_no, image):
 def progress_update(local_frame_no, local_frame_sum, name):
     global frame_no
     global frame_sum
-    total_frames_done = frame_no + local_frame_sum
+    total_frames_done = frame_no + local_frame_no
     total_progress = float(total_frames_done) / frame_sum * 100
     local_progress = float(local_frame_no) / local_frame_sum * 100
-    print 'Progress: %.1f Current task: %.1f %s' % (total_progress, local_progress, name)
+    print 'Progress: %.1f%%, Current task: %.1f%% %s' % (total_progress, local_progress, name)
 
 # anim operation pause
 # keeps the image still for a while
