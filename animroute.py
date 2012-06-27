@@ -158,7 +158,7 @@ def anim_op_bars(duration, args):
 
         # draw upper horizontal bar
         draw.line((map (lambda v: int(v), (
-                    my_frame.size[0] * ( 1 - float(step)/frame_count),
+                    my_frame.size[0] - (my_frame.size[0]-upper_left[0]+thickness) * float(step)/frame_count,
                     upper_left[1] - thickness,
                     my_frame.size[0],
                     upper_left[1] - thickness
@@ -168,7 +168,7 @@ def anim_op_bars(duration, args):
         draw.line(map (lambda v: int(v), (
                     0,
                     lower_right[1] + thickness,
-                    my_frame.size[0] * float(step)/frame_count,
+                    (lower_right[0] + thickness) * float(step)/frame_count,
                     lower_right[1] + thickness
                   )), fill=color_triple, width=thickness)
 
@@ -177,13 +177,13 @@ def anim_op_bars(duration, args):
                     upper_left[0] - thickness,
                     0,
                     upper_left[0] - thickness,
-                    my_frame.size[1] * float(step)/frame_count
+                    (lower_right[1] + thickness) * float(step)/frame_count
                   )), fill=color_triple, width=thickness)
 
         # draw right vertical bar
         draw.line(map (lambda v: int(v), (
                     lower_right[0] + thickness,
-                    my_frame.size[1] * (1 - float(step)/frame_count),
+                    my_frame.size[1] - (my_frame.size[1]-upper_left[1]+thickness) * float(step)/frame_count,
                     lower_right[0] + thickness,
                     my_frame.size[1]
                   )), fill=color_triple, width=thickness)
