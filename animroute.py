@@ -10,6 +10,7 @@
 import os, sys
 import re
 import shlex
+from time import time
 from shutil import rmtree
 import Image, ImageDraw
 
@@ -120,10 +121,22 @@ def write_frame(frame_no, image):
 def progress_update(local_frame_no, local_frame_sum, name):
     global frame_no
     global frame_sum
+    global start_time
+
+    now = time()
+
     total_frames_done = frame_no + local_frame_no
     total_progress = float(total_frames_done) / frame_sum * 100
     local_progress = float(local_frame_no) / local_frame_sum * 100
-    print 'Progress: %.1f%%, Current task: %.1f%% %s' % (total_progress, local_progress, name)
+
+    remaining = (now-start_time) / total_frames_done * float(frame_sum-total_frames_done)
+    if remaining >= 60:
+        remaining = '%d:%02d' % (remaining//60, remaining % 60)
+    else:
+        remaining = '%ds' % (remaining)
+        
+
+    print 'Progress: %.1f%%, Current task: %.1f%% %s, Remaining: %s' % (total_progress, local_progress, name, remaining)
 
 # anim operation pause
 # keeps the image still for a while
@@ -375,6 +388,7 @@ if os.path.exists(params['tmpdir']):
 os.mkdir(params['tmpdir'])
 
 # initialize progress indication
+start_time = time()
 frame_sum = 0
 for op in ops:
     (name, duration, args) = op
