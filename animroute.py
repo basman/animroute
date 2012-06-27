@@ -89,6 +89,24 @@ def abort(msg):
     print msg
     sys.exit(1)
 
+# copy frame file by symlinking
+# args: source_frame_index, target_frame_index
+def copy_frame(orig_i, target_i):
+    global params
+    frame1_filename = '%s/frame_%06d.png' % (params['tmpdir'], orig_i)
+    frame2_filename = '%s/frame_%06d.png' % (params['tmpdir'], target_i)
+    # try creating a symlink
+    if not os.path.exists(frame1_filename):
+        abort("copy_frame: file not found '" + frame1_filename + "'")
+    if os.path.exists(frame2_filename):
+        abort("copy_frame: file exists '" + frame2_filename + "'")
+
+    try:
+        os.symlink(frame1_filename, frame2_filename)
+    except:
+        print "copy_frame: os.symlink() failed. Trying to copy."
+        shutil.copy(frame1_filename, frame2_filename)
+
 # write out a single frame, scaling it down
 def write_frame(frame_no, image):
     global params
@@ -109,7 +127,6 @@ def progress_update(local_frame_no, local_frame_sum, name):
 
 # anim operation pause
 # keeps the image still for a while
-# TODO optimize by creating hard links
 def anim_op_pause(duration):
     global frame
     global frame_no
@@ -117,7 +134,7 @@ def anim_op_pause(duration):
 
     frame_count = int(duration * params['fps'])
     for i in range(frame_no+1, frame_no+frame_count+1):
-        write_frame(i, frame)
+        copy_frame(frame_no, i)
         if i % (frame_count/20+1) == 0:
             progress_update(i-frame_no, frame_count, 'pause')
 
