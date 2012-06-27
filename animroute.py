@@ -118,7 +118,7 @@ def anim_op_pause(duration):
     frame_count = int(duration * params['fps'])
     for i in range(frame_no+1, frame_no+frame_count+1):
         write_frame(i, frame)
-        if i % (frame_count/20) == 0:
+        if i % (frame_count/20+1) == 0:
             progress_update(i-frame_no, frame_count, 'pause')
 
     frame_no += frame_count 
@@ -191,7 +191,7 @@ def anim_op_bars(duration, args):
         del draw
         write_frame(frame_i, my_frame)
 
-        if step % (frame_count/20) == 0:
+        if step % (frame_count/20+1) == 0:
             progress_update(step, frame_count, 'bars')
 
 
@@ -256,7 +256,7 @@ def anim_op_outer_shadow(duration, args):
 
         write_frame(frame_i, my_frame)
 
-        if step % (frame_count/20) == 0:
+        if step % (frame_count/20+1) == 0:
             progress_update(step, frame_count, 'outer_shadow')
 
     frame_no += frame_count
@@ -296,7 +296,7 @@ def anim_op_zoom_in(duration, args):
         my_frame = frame.crop((from_x, from_y, to_x, to_y))
         write_frame(frame_i, my_frame)
 
-        if step % (frame_count/20) == 0:
+        if step % (frame_count/20+1) == 0:
             progress_update(step, frame_count, 'zoom_in')
 
     frame_no += frame_count
