@@ -260,9 +260,14 @@ def anim_op_outer_shadow(duration, args):
         my_frame = frame.copy()
         (width,height) = my_frame.size
         pix = my_frame.load()
-        # TODO accelerate, by leaving out inner region 
         for row in range(height):
             for col in range(width):
+
+                # skip inner region
+                if col > upper_left[0] and col < lower_right[0] and \
+                   row > upper_left[1] and row < lower_right[1]:
+                    continue
+
                 p = pix[col,row]
                 (r,g,b) = p
 
