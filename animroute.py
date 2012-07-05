@@ -95,11 +95,12 @@ def abort(msg):
 # args: source_frame_index, target_frame_index
 def copy_frame(orig_i, target_i):
     global params
+    global last_frame_no
     frame1_filename = '%s/frame_%06d.png' % (params['tmpdir'], orig_i)
     frame2_filename = '%s/frame_%06d.png' % (params['tmpdir'], target_i)
     # try creating a symlink
     if not os.path.exists(frame1_filename):
-        abort("copy_frame: file not found '" + frame1_filename + "'")
+        abort("copy_frame: file not found '%s', last_frame_no=%d" % (frame1_filename, last_frame_no))
     if os.path.exists(frame2_filename):
         abort("copy_frame: file exists '" + frame2_filename + "'")
 
@@ -112,7 +113,17 @@ def copy_frame(orig_i, target_i):
 # write out a single frame, scaling it down
 def write_frame(frame_no, image):
     global params
+    global last_frame_no
+
     frame_filename = '%s/frame_%06d.png' % (params['tmpdir'], frame_no)
+
+    if last_frame_no+1 != frame_no:
+        abort("invalid frame_no %d, expected %d" % (frame_no, last_frame_no+1))
+    if os.path.exists(frame_filename):
+        abort("duplicate frame written: " % (frame_no))
+
+    last_frame_no = frame_no
+
     scaled_copy = image.copy()
     # thumbnail() maintains the aspect ratio. See also http://stackoverflow.com/questions/273946/how-do-i-resize-an-image-using-pil-and-maintain-its-aspect-ratio
     scaled_copy.thumbnail(params['resolution'], Image.ANTIALIAS)
@@ -347,12 +358,11 @@ def anim_op_bezier(duration, args):
     global frame_no
     global params
 
-    frame_count = int(duration * params['fps'])
- 
     if len(args) < 5:
         abort("bezier: not enough arguments")
 
     color = args.pop(0)
+    color_triple='rgb(' + str(color)[1:-1] + ')'
     thickness = args.pop(0)
 
     if len(args) < 3:
@@ -394,16 +404,17 @@ def anim_op_bezier(duration, args):
             cp2 = start
 
         print "bezier control frame %d: " % (frame_no), start, cp1, cp2, end
-        draw_bezier(frame, start, cp1, cp2, end, color, thickness)
-        frame_no += 1
-        write_frame(frame_no, frame)
-        #anim_op_pause(2.0)
-
+        frames = int(duration/(len(args)-1)*params['fps'])
+        draw_bezier(frame, start, cp1, cp2, end, color_triple, thickness, frames)
+        frame_no += frames
  
 
 # draw a bezier curve on the given image
-def draw_bezier(image, start, cpt1, cpt2, end, color, thickness):
+def draw_bezier(image, start, cpt1, cpt2, end, color, thickness, frames):
     # code found at http://code.activestate.com/recipes/577961-bezier-curve-using-de-casteljau-algorithm/
+
+    global frame_no
+
     coorArrX = [start[0], cpt1[0], cpt2[0], end[0]]
     coorArrY = [start[1], cpt1[1], cpt2[1], end[1]]
 
@@ -412,25 +423,31 @@ def draw_bezier(image, start, cpt1, cpt2, end, color, thickness):
     # plot the curve
     numSteps = 10000
     n = 4 # number of control points
+    frame_i = 0
+
+    if numSteps < frames:
+        numSteps = frames
+
     for k in range(numSteps):
         t = float(k) / (numSteps - 1)
         x = int(B(coorArrX, 0, n - 1, t))
         y = int(B(coorArrY, 0, n - 1, t))
-        try:
-            #image.putpixel((x, y), (0, 255, 0))
-            draw.ellipse((x - thickness, y - thickness, x + thickness, y + thickness), color)
-        except:
-            pass
+        draw.ellipse((x - thickness, y - thickness, x + thickness, y + thickness), fill=color)
 
-    # plot the control points
-    cr = 3 # circle radius
-    for k in range(n):
-        x = coorArrX[k]
-        y = coorArrY[k]
-        try:
-            draw.ellipse((x - cr, y - cr, x + cr, y + cr), (255, 255, 0))
-        except:
-            pass
+        if numSteps % frames == 0:
+            frame_i += 1
+            write_frame(frame_no+frame_i, image)
+
+#    # plot the control points
+#    cr = 3 # circle radius
+#    for k in range(n):
+#        x = coorArrX[k]
+#        y = coorArrY[k]
+#        try:
+#            draw.ellipse((x - cr, y - cr, x + cr, y + cr), (255, 255, 0))
+#        except:
+#            pass
+    del draw
 
 
 # helper function for draw_bezier
@@ -459,6 +476,7 @@ def help():
 #         2: process animation operators
 #         3: compile AVI file
 frame_no = 0
+last_frame_no = 0
 params   = dict()
 phase    = 3
 
