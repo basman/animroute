@@ -13,6 +13,7 @@ import shlex
 from time import time
 from shutil import rmtree
 import Image, ImageDraw
+from geometry import *
 
 # populate global config settings in dictionary params and
 # return stack of animation operations
@@ -338,6 +339,113 @@ def anim_op_zoom_in(duration, args):
     # leave image in final state for next animation operations
     frame = my_frame
 
+
+# anim operation bezier
+# args: duration color thickness (x1,y1), (x2,y2), ...
+def anim_op_bezier(duration, args):
+    global frame
+    global frame_no
+    global params
+
+    frame_count = int(duration * params['fps'])
+ 
+    if len(args) < 5:
+        abort("bezier: not enough arguments")
+
+    color = args.pop(0)
+    thickness = args.pop(0)
+
+    if len(args) < 3:
+        abort("bezier: requires at least 3 points")
+
+    if len(args[0]) != 2:
+        abort("bezier: third and later argument needs to be a point (x,y)")
+
+    g = []
+    for i in range(len(args)-1):
+
+        if len(args[i+1]) != 2:
+            abort("bezier: third and later argument needs to be a point (x,y)")
+
+        if i<len(args)-2:
+            g.append( Line(gradient(args[i],args[i+2]), args[i+1]) )
+            print "g(%d): %s" % (i+1, g[i])
+
+        start = args[i]
+        end   = args[i+1]
+        if i==0:
+            cp1 = end
+        else:
+            helper1 = g[i-1].perpendicular(args[i+1])
+            print "helper1: %s" % (helper1)
+            cp1     = g[i-1].crosspoint(helper1)
+            cp1 = map(lambda v: int(v), cp1)
+
+        if i==0:
+            helper2 = g[i].perpendicular(start)
+            print "helper2: %s" % (helper2)
+            cp2     = g[i].crosspoint(helper2)
+            cp2 = map(lambda v: int(v), cp2)
+        elif i<len(args)-2:
+            cp2 = g[i].crosspoint(g[i-1])
+            cp2 = map(lambda v: int(v), cp2)
+        else:
+            # last section
+            cp2 = start
+
+        print "bezier control frame %d: " % (frame_no), start, cp1, cp2, end
+        draw_bezier(frame, start, cp1, cp2, end, color, thickness)
+        frame_no += 1
+        write_frame(frame_no, frame)
+        #anim_op_pause(2.0)
+
+ 
+
+# draw a bezier curve on the given image
+def draw_bezier(image, start, cpt1, cpt2, end, color, thickness):
+    # code found at http://code.activestate.com/recipes/577961-bezier-curve-using-de-casteljau-algorithm/
+    coorArrX = [start[0], cpt1[0], cpt2[0], end[0]]
+    coorArrY = [start[1], cpt1[1], cpt2[1], end[1]]
+
+    draw = ImageDraw.Draw(image)
+
+    # plot the curve
+    numSteps = 10000
+    n = 4 # number of control points
+    for k in range(numSteps):
+        t = float(k) / (numSteps - 1)
+        x = int(B(coorArrX, 0, n - 1, t))
+        y = int(B(coorArrY, 0, n - 1, t))
+        try:
+            #image.putpixel((x, y), (0, 255, 0))
+            draw.ellipse((x - thickness, y - thickness, x + thickness, y + thickness), color)
+        except:
+            pass
+
+    # plot the control points
+    cr = 3 # circle radius
+    for k in range(n):
+        x = coorArrX[k]
+        y = coorArrY[k]
+        try:
+            draw.ellipse((x - cr, y - cr, x + cr, y + cr), (255, 255, 0))
+        except:
+            pass
+
+
+# helper function for draw_bezier
+def B(coorArr, i, j, t):
+    if j == 0:
+        return coorArr[i]
+    return B(coorArr, i, j - 1, t) * (1 - t) + B(coorArr, i + 1, j - 1, t) * t
+
+
+def help():
+    print "usage:"
+    print "   -c configfile   specify configuration file"
+    print "   -p phase        don't process beyond given phase"
+
+
 # ===============================================================
 #              MAIN  PROGRAM
 # ===============================================================
@@ -346,13 +454,32 @@ def anim_op_zoom_in(duration, args):
 # params: global configuration settings
 # frame: an image object containing the current frame
 # frame_no: the number of the last frame written to disk
+# phase: what processing steps to perform
+#         1: parsing of config file
+#         2: process animation operators
+#         3: compile AVI file
 frame_no = 0
-params = dict()
+params   = dict()
+phase    = 3
 
 # check for config file
 if len(sys.argv) < 2:
     abort("missing argument: configuration filename")
-params['configfile'] = sys.argv[1]
+
+while sys.argv[1][0] == '-':
+    a = sys.argv.pop(1)
+    if a == '-p':
+        phase = int(sys.argv.pop(1))
+    elif a == '-c':
+        params['configfile'] = sys.argv.pop(1)
+    elif a == '-h':
+        help()
+        sys.exit(0)
+
+
+
+if not 'configfile' in params:
+    params['configfile'] = sys.argv[1]
 if not os.path.exists(params['configfile']):
     abort("config file not found'" + params['configfile'] + "'")
 
@@ -404,6 +531,9 @@ for op in ops:
 #               MAIN  LOOP
 # =================================================
 
+if phase < 2:
+    abort("last phase reached: config file parsed")
+
 # process operators
 for op in ops:
     (name, duration, args) = op
@@ -416,12 +546,14 @@ for op in ops:
     elif name == 'zoom_in':
         anim_op_zoom_in(duration, args)
     elif name == 'bezier':
-        print 'anim_op_bezier(duration, args)'
+        anim_op_bezier(duration, args)
     else:
         abort("unknown operation " + name)
 
+if phase < 3:
+    abort("last phase reached: animation operators applied")
 
-# terminate progress line
+# complete progress line
 print ""
 print "running mencoder to produce", params['outfile']
 
