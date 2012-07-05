@@ -96,6 +96,7 @@ def abort(msg):
 def copy_frame(orig_i, target_i):
     global params
     global last_frame_no
+
     frame1_filename = '%s/frame_%06d.png' % (params['tmpdir'], orig_i)
     frame2_filename = '%s/frame_%06d.png' % (params['tmpdir'], target_i)
     # try creating a symlink
@@ -110,6 +111,8 @@ def copy_frame(orig_i, target_i):
         print "copy_frame: os.symlink() failed. Trying to copy."
         shutil.copy(frame1_filename, frame2_filename)
 
+    last_frame_no = target_i
+
 # write out a single frame, scaling it down
 def write_frame(frame_no, image):
     global params
@@ -118,9 +121,9 @@ def write_frame(frame_no, image):
     frame_filename = '%s/frame_%06d.png' % (params['tmpdir'], frame_no)
 
     if last_frame_no+1 != frame_no:
-        abort("invalid frame_no %d, expected %d" % (frame_no, last_frame_no+1))
+        abort("write_frame: invalid frame_no %d, expected %d" % (frame_no, last_frame_no+1))
     if os.path.exists(frame_filename):
-        abort("duplicate frame written: " % (frame_no))
+        abort("write_frame: duplicate frame written: " % (frame_no))
 
     last_frame_no = frame_no
 
@@ -420,7 +423,6 @@ def draw_bezier(image, start, cpt1, cpt2, end, color, thickness, frames):
 
     draw = ImageDraw.Draw(image)
 
-    # plot the curve
     numSteps = 10000
     n = 4 # number of control points
     frame_i = 0
@@ -437,6 +439,9 @@ def draw_bezier(image, start, cpt1, cpt2, end, color, thickness, frames):
         if (k+1) % frames == 0:
             frame_i += 1
             write_frame(frame_no+frame_i, image)
+
+    if frame_i != frames:
+        abort("draw_bezier: number of written frames %d does not match parameter %d" % (frame_i, frames))
 
 #    # plot the control points
 #    cr = 3 # circle radius
