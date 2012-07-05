@@ -6,7 +6,7 @@ def gradient(p1, p2):
     if(p1[0] == p2[0]):
         return None
     else:
-        return (p2[1]-p1[1]) / (p2[0]-p1[0])
+        return float(p2[1]-p1[1]) / (p2[0]-p1[0])
 
 
 # special cases: m=None, so b represents x at y=0 instead of y at x=0
