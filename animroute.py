@@ -436,7 +436,7 @@ def draw_bezier(image, start, cpt1, cpt2, end, color, thickness, frames):
         y = int(B(coorArrY, 0, n - 1, t))
         draw.ellipse((x - thickness, y - thickness, x + thickness, y + thickness), fill=color)
 
-        if (k+1) % frames == 0:
+        if (k+1) % (numSteps/frames) == 0:
             frame_i += 1
             write_frame(frame_no+frame_i, image)
 
