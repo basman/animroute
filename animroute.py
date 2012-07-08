@@ -94,13 +94,20 @@ def abort(msg):
 # args: source_frame_index, target_frame_index
 def copy_frame(orig_i, target_i):
     global params
+    global last_frame_no
+
+    if last_frame_no+1 != target_i:
+        abort("copy_frame: invalid frame_no %d, expected %d" % (target_i, last_frame_no+1))
+
     frame1_filename = '%s/frame_%06d.png' % (params['tmpdir'], orig_i)
     frame2_filename = '%s/frame_%06d.png' % (params['tmpdir'], target_i)
     # try creating a symlink
     if not os.path.exists(frame1_filename):
-        abort("copy_frame: file not found '" + frame1_filename + "'")
+        abort("copy_frame: file not found '%s', last_frame_no=%d" % (frame1_filename, last_frame_no))
     if os.path.exists(frame2_filename):
         abort("copy_frame: file exists '" + frame2_filename + "'")
+
+    last_frame_no = target_i
 
     try:
         os.symlink(frame1_filename, frame2_filename)
@@ -111,6 +118,15 @@ def copy_frame(orig_i, target_i):
 # write out a single frame, scaling it down
 def write_frame(frame_no, image):
     global params
+    global last_frame_no
+
+    if last_frame_no+1 != frame_no:
+        abort("write_frame: invalid frame_no %d, expected %d" % (frame_no, last_frame_no+1))
+    if os.path.exists(frame_filename):
+        abort("write_frame: duplicate frame written: " % (frame_no))
+
+    last_frame_no = frame_no
+
     frame_filename = '%s/frame_%06d.png' % (params['tmpdir'], frame_no)
     scaled_copy = image.copy()
     # thumbnail() maintains the aspect ratio. See also http://stackoverflow.com/questions/273946/how-do-i-resize-an-image-using-pil-and-maintain-its-aspect-ratio
@@ -347,6 +363,7 @@ def anim_op_zoom_in(duration, args):
 # frame: an image object containing the current frame
 # frame_no: the number of the last frame written to disk
 frame_no = 0
+last_frame_no = 0
 params = dict()
 
 # check for config file
