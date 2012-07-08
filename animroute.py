@@ -409,7 +409,7 @@ def anim_op_bezier(duration, args):
         print "bezier control frame %d: " % (frame_no), start, cp1, cp2, end
         frames = int(duration/(len(args)-1)*params['fps'])
         draw_bezier(frame, start, cp1, cp2, end, color_triple, thickness, frames)
-        frame_no += frames
+        frame_no += frames + 1
  
 
 # draw a bezier curve on the given image
@@ -443,15 +443,16 @@ def draw_bezier(image, start, cpt1, cpt2, end, color, thickness, frames):
     if frame_i != frames:
         abort("draw_bezier: number of written frames %d does not match parameter %d" % (frame_i, frames))
 
-#    # plot the control points
-#    cr = 3 # circle radius
-#    for k in range(n):
-#        x = coorArrX[k]
-#        y = coorArrY[k]
-#        try:
-#            draw.ellipse((x - cr, y - cr, x + cr, y + cr), (255, 255, 0))
-#        except:
-#            pass
+    # plot the control points
+    cr = 9 # circle radius
+    ctlpt_colours = ('rgb(0,0,255)', 'rgb(0,255,0)', 'rgb(255,0,255)', 'rgb(255,255,255)')
+    for k in range(n):
+        x = coorArrX[k]
+        y = coorArrY[k]
+        draw.ellipse((x - cr, y - cr, x + cr, y + cr), fill=ctlpt_colours[k])
+
+    write_frame(frame_no+frame_i+1, image)
+
     del draw
 
 
