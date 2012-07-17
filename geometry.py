@@ -1,5 +1,7 @@
 # library for basic geometric elements
 
+import math
+
 # compute gradient between two points
 # None means vertical
 def gradient(p1, p2):
@@ -8,6 +10,23 @@ def gradient(p1, p2):
     else:
         return float(p2[1]-p1[1]) / (p2[0]-p1[0])
 
+# return normalized vector pointing from p1 to p2
+def direction(p1, p2):
+    v = [ p2[0]-p1[0], p2[1]-p1[1] ]
+    return normalize(v)
+
+# normalize the given vector, so length becomes 1.0
+def normalize(v):
+    return scale(v, 1.0)
+
+# scale a vector to match length
+def scale(v, l):
+    div = distance((0,0), v)
+    return [v[0]/div*l, v[1]/div*l]
+
+# return the distance between two points
+def distance(p1, p2):
+    return math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
 
 # special cases: m=None, so b represents x at y=0 instead of y at x=0
 class Line:

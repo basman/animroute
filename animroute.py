@@ -13,6 +13,8 @@ import shlex
 from time import time
 from shutil import rmtree
 import Image, ImageDraw
+from math import pi
+from geometry import *
 
 # populate global config settings in dictionary params and
 # return stack of animation operations
@@ -101,6 +103,7 @@ def copy_frame(orig_i, target_i):
 
     frame1_filename = '%s/frame_%06d.png' % (params['tmpdir'], orig_i)
     frame2_filename = '%s/frame_%06d.png' % (params['tmpdir'], target_i)
+
     # try creating a symlink
     if not os.path.exists(frame1_filename):
         abort("copy_frame: file not found '%s', last_frame_no=%d" % (frame1_filename, last_frame_no))
@@ -120,6 +123,8 @@ def write_frame(frame_no, image):
     global params
     global last_frame_no
 
+    frame_filename = '%s/frame_%06d.png' % (params['tmpdir'], frame_no)
+
     if last_frame_no+1 != frame_no:
         abort("write_frame: invalid frame_no %d, expected %d" % (frame_no, last_frame_no+1))
     if os.path.exists(frame_filename):
@@ -127,7 +132,6 @@ def write_frame(frame_no, image):
 
     last_frame_no = frame_no
 
-    frame_filename = '%s/frame_%06d.png' % (params['tmpdir'], frame_no)
     scaled_copy = image.copy()
     # thumbnail() maintains the aspect ratio. See also http://stackoverflow.com/questions/273946/how-do-i-resize-an-image-using-pil-and-maintain-its-aspect-ratio
     scaled_copy.thumbnail(params['resolution'], Image.ANTIALIAS)
@@ -354,6 +358,79 @@ def anim_op_zoom_in(duration, args):
     # leave image in final state for next animation operations
     frame = my_frame
 
+def anim_op_route(duration, args):
+    global frame
+    global frame_no
+    global params
+
+    if len(args) < 4:
+        abort("route: not enough arguments (color, thickness, pt1, pt2, ...)")
+
+    frame_total = int(duration * params['fps'])
+
+    color = args.pop(0)
+    color_triple='rgb(' + str(color)[1:-1] + ')'
+    thickness = args.pop(0)
+
+    heading = []
+    inertia   = 2 * pi / 360 * 5 # rotational inertia in radiant/frame
+
+    if len(args) < 2:
+        abort("route: requires at least 2 points")
+
+    if len(args[0]) != 2:
+        abort("route: third and later argument needs to be a point (x,y)")
+    args[0] = map(lambda v: float(v), args[0])
+
+    pos       = args[0]
+
+    # measure distance between each pair of points
+    distances = [0]
+    distance_sum = 0
+
+    for i in range(1,len(args)):
+        d = distance(args[i],args[i-1])
+        distances.append( d )
+        distance_sum += d
+
+    draw = ImageDraw.Draw(frame)
+
+    for i in range(1,len(args)):
+        if len(args[i]) != 2:
+            abort("route: third and later argument needs to be a point (x,y)")
+        args[i] = map(lambda v: float(v), args[i])
+
+        # how many frames to produce for this section
+        frame_count = distances[i] / distance_sum * frame_total
+        # the distance for each iteration
+        distance_per_frame = distances[i] / frame_count
+
+        while int(pos[0]) != int(args[i][0]) or int(pos[1]) != int(args[i][1]):
+            if i == 1:
+                heading = direction(args[0], args[1])
+            else:
+                # TODO turn direction towards next point, considering inertia
+                heading = direction(args[i-1], args[i])
+
+            # rescale direction to correct step length
+            heading = scale(heading, distance_per_frame)
+
+            # move towards next point
+            pos[0] += heading[0]
+            pos[1] += heading[1]
+
+            # draw
+            draw.ellipse(( 
+                int(pos[0]+thickness), 
+                int(pos[1]+thickness),
+                int(pos[0]-thickness),
+                int(pos[1]-thickness) ), fill=color_triple)
+
+            frame_no += 1
+            write_frame(frame_no, frame)
+       
+    del(draw)
+
 # ===============================================================
 #              MAIN  PROGRAM
 # ===============================================================
@@ -432,8 +509,8 @@ for op in ops:
         anim_op_outer_shadow(duration, args)
     elif name == 'zoom_in':
         anim_op_zoom_in(duration, args)
-    elif name == 'bezier':
-        print 'anim_op_bezier(duration, args)'
+    elif name == 'route':
+        anim_op_route(duration, args)
     else:
         abort("unknown operation " + name)
 
