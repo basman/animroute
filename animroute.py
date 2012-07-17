@@ -400,13 +400,15 @@ def anim_op_bezier(duration, args):
             helper2 = g[i].perpendicular(start)
             print "helper2: %s" % (helper2)
             cp2     = g[i].crosspoint(helper2)
+            # mirror cp2 around end
+            cp2 = (end[0] + (end[0]-cp2[0]), end[1] + (end[1]-cp2[1]))
             cp2 = map(lambda v: int(v), cp2)
         elif i<len(args)-2:
             cp2 = g[i].crosspoint(g[i-1])
             cp2 = map(lambda v: int(v), cp2)
         else:
             # last section
-            cp2 = start
+            cp2 = cp1
 
         print "bezier control frame %d: " % (frame_no), start, cp1, cp2, end
         frames = int(duration/(len(args)-1)*params['fps'])
