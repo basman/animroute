@@ -383,6 +383,8 @@ def anim_op_bezier(duration, args):
         if i<len(args)-2:
             g.append( Line(gradient(args[i],args[i+2]), args[i+1]) )
             print "g(%d): %s" % (i+1, g[i])
+            # draw helper line
+            g[-1].draw(frame, 'rgb(40,250,30)', 3)
 
         start = args[i]
         end   = args[i+1]

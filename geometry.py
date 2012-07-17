@@ -1,5 +1,7 @@
 # library for basic geometric elements
 
+import ImageDraw
+
 # compute gradient between two points
 # None means vertical
 def gradient(p1, p2):
@@ -45,6 +47,26 @@ class Line:
             m = -1 / self.m
 
         return Line(m, point)
+
+    def draw(self, frame, color, thickness):
+        draw = ImageDraw.Draw(frame)
+        if self.m != None:
+            draw.line((map (lambda v: int(v), (
+                    0,
+                    self.b,
+                    frame.size[0],
+                    self.m * frame.size[0] + self.b,
+                    ))), fill=color, width=thickness)
+        else:
+            # vertical line
+            draw.line((map (lambda v: int(v), (
+                    self.b,
+                    0,
+                    self.b,
+                    frame.size[0],
+                    ))), fill=color, width=thickness)
+
+        del(draw)
 
     def __str__(self):
         return "y = " + str(self.m) + " * x + " + str(self.b)
