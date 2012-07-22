@@ -98,15 +98,16 @@ def copy_frame(orig_i, target_i):
     global last_frame_no
 
     frame1_filename = '%s/frame_%06d.png' % (params['tmpdir'], orig_i)
+    frame1_symlink   = 'frame_%06d.png' % (orig_i)
     frame2_filename = '%s/frame_%06d.png' % (params['tmpdir'], target_i)
     # try creating a symlink
     if not os.path.exists(frame1_filename):
-        abort("copy_frame: file not found '%s', last_frame_no=%d" % (frame1_filename, last_frame_no))
+        abort("copy_frame: file not found '%s', last_frame_no=%d, new_frame_no=%d" % (frame1_filename, last_frame_no, target_i))
     if os.path.exists(frame2_filename):
         abort("copy_frame: file exists '" + frame2_filename + "'")
 
     try:
-        os.symlink(frame1_filename, frame2_filename)
+        os.symlink(frame1_symlink, frame2_filename)
     except:
         print "copy_frame: os.symlink() failed. Trying to copy."
         shutil.copy(frame1_filename, frame2_filename)
@@ -480,7 +481,8 @@ def help():
 # global python variables
 # params: global configuration settings
 # frame: an image object containing the current frame
-# frame_no: the number of the last frame written to disk
+# frame_no: the number of the last frame written to disk (not always up-to-date during anim operations)
+# last_frame_no: the number of the last frame written to disk
 # phase: what processing steps to perform
 #         1: parsing of config file
 #         2: process animation operators
@@ -565,6 +567,7 @@ if phase < 2:
 # process operators
 for op in ops:
     (name, duration, args) = op
+    print "processing animation " + name + " [" + str(duration) + "] " + str(args)
     if name == 'pause':
         anim_op_pause(duration)
     elif name == 'bars':
