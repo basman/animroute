@@ -386,8 +386,6 @@ def anim_op_route(duration, args):
         abort("route: third and later argument needs to be a point (x,y)")
     args[0] = map(lambda v: float(v), args[0])
 
-    pos       = args[0]
-
     # measure distance between each pair of points
     distances = [0]
     distance_sum = 0
@@ -399,6 +397,12 @@ def anim_op_route(duration, args):
 
     draw = ImageDraw.Draw(frame)
 
+    # initialize run values
+    pos      = args[0]
+    last_pos = pos
+    heading  = direction(args[0], args[1])
+
+    # loop over route points
     for i in range(1,len(args)):
         if len(args[i]) != 2:
             abort("route: third and later argument needs to be a point (x,y)")
@@ -409,12 +413,10 @@ def anim_op_route(duration, args):
         # the distance for each iteration
         distance_per_frame = distances[i] / frame_count
 
+        # loop over interpolated points
         while distance(pos,args[i]) >= distance_per_frame:
-            if i == 1:
-                heading = direction(args[0], args[1])
-            else:
-                # TODO turn direction towards next point, considering inertia
-                heading = direction(args[i-1], args[i])
+            # TODO turn direction towards next point, considering inertia
+            heading = direction(args[i-1], args[i])
 
             # rescale direction to correct step length
             heading = scale(heading, distance_per_frame)
@@ -429,11 +431,17 @@ def anim_op_route(duration, args):
                 int(pos[1]-thickness),
                 int(pos[0]+thickness),
                 int(pos[1]+thickness) ), fill=color_triple)
+            #draw.line((map (lambda v: int(v), (
+            #    last_pos[0],
+            #    last_pos[1],
+            #    pos[0],
+            #    pos[1]))), fill=color_triple, width=thickness)
 
             if frame_no % 20 == 0:
                 progress_update(frame_no-start_frame_no, frame_total, 'route')
             print "anim_op_route: p(%d,%d) h(%.2f,%.2f) t(%d,%d) dis(%.2f)" % (pos[0], pos[1], heading[0], heading[1], args[i][0], args[i][1], distance(pos, args[i]))
 
+            last_pos = pos
             frame_no += 1
             write_frame(frame_no, frame)
        
