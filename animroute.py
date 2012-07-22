@@ -423,10 +423,12 @@ def anim_op_route(duration, args):
 
             # draw
             draw.ellipse(( 
-                int(pos[0]+thickness), 
-                int(pos[1]+thickness),
                 int(pos[0]-thickness),
-                int(pos[1]-thickness) ), fill=color_triple)
+                int(pos[1]-thickness),
+                int(pos[0]+thickness),
+                int(pos[1]+thickness) ), fill=color_triple)
+
+            print "anim_op_route: p(%.2f,%.2f) h(%.2f,%.2f) t(%.2f,%.2f) dis(%.2f)" % (pos[0], pos[1], heading[0], heading[1], args[i][0], args[i][1], distance(pos, args[i]))
 
             frame_no += 1
             write_frame(frame_no, frame)
