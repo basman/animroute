@@ -29,7 +29,7 @@ def parse_config(config):
             name = token_list.pop(0)
             value = token_list.pop(0)
             params[name] = convert_varlist(value)
-            #print "global conf " + name + "=" + str(params[name])
+            #print("global conf " + name + "=" + str(params[name]))
 
         elif token == "anim":
             duration = convert_timespec(token_list.pop(0))
@@ -42,7 +42,7 @@ def parse_config(config):
             else:
                 args = list()
             operator_stack.append((operator, duration, args))
-            #print "anim_op_" + operator + " [" + str(duration) + "] " + str(args)
+            #print("anim_op_" + operator + " [" + str(duration) + "] " + str(args))
 
         else:
             abort("unknown config instruction " + token)
@@ -90,7 +90,7 @@ def convert_nested(arg_list):
 
 # fatal error occured
 def abort(msg):
-    print msg
+    print(msg)
     sys.exit(1)
 
 # copy frame file by symlinking
@@ -117,7 +117,7 @@ def copy_frame(orig_i, target_i):
     try:
         os.symlink(frame1_symlink, frame2_filename)
     except:
-        print "copy_frame: os.symlink() failed. Trying to copy."
+        print("copy_frame: os.symlink() failed. Trying to copy.")
         shutil.copy(frame1_filename, frame2_filename)
 
 # write out a single frame, scaling it down
@@ -158,7 +158,7 @@ def progress_update(local_frame_no, local_frame_sum, name):
         remaining = '%ds' % (remaining)
         
 
-    print 'Progress: %.1f%%, Current task: %.1f%% %s, Remaining: %s' % (total_progress, local_progress, name, remaining)
+    print('Progress: %.1f%%, Current task: %.1f%% %s, Remaining: %s' % (total_progress, local_progress, name, remaining))
 
 # anim operation pause
 # keeps the image still for a while
@@ -439,7 +439,8 @@ def anim_op_route(duration, args):
 
             if frame_no % 20 == 0:
                 progress_update(frame_no-start_frame_no, frame_total, 'route')
-            print "anim_op_route: p(%d,%d) h(%.2f,%.2f) t(%d,%d) dis(%.2f)" % (pos[0], pos[1], heading[0], heading[1], args[i][0], args[i][1], distance(pos, args[i]))
+
+            print("anim_op_route: p(%d,%d->%d,%d) h(%.2f,%.2f) t(%d,%d) dis(%.2f)" % (last_pos[0], last_pos[1], pos[0], pos[1], heading[0], heading[1], args[i][0], args[i][1], distance(pos, args[i])))
 
             last_pos = pos
             frame_no += 1
@@ -506,7 +507,7 @@ if not 'outfile' in params:
         params['outfile'] = m.group(1) + '.avi'
     else:
         params['outfile'] = params['configfile'] + '.avi'
-    print "output filename", params['outfile']
+    print("output filename", params['outfile'])
     
 
 # set default values
@@ -514,11 +515,11 @@ if not 'tmpdir' in params:
     params['tmpdir'] = 'tmp'
 
 # open map image
-print "opening mapfile", params['mapfile']
+print("opening mapfile", params['mapfile'])
 try:
 	frame = Image.open(params['mapfile'])
 except IOError:
-	print "can not open map image", params['mapfile']
+	print("can not open map image", params['mapfile'])
 
 # create temporary output directory
 if os.path.exists(params['tmpdir']):
@@ -543,7 +544,7 @@ if phase < 2:
 # process operators
 for op in ops:
     (name, duration, args) = op
-    print "processing animation " + name + " [" + str(duration) + "] " + str(args)
+    print("processing animation " + name + " [" + str(duration) + "] " + str(args))
     if name == 'pause':
         anim_op_pause(duration)
     elif name == 'bars':
@@ -561,8 +562,8 @@ if phase < 3:
     abort("last phase reached: animation operators applied")
 
 # complete progress line
-print ""
-print "running mencoder to produce", params['outfile']
+print("")
+print("running mencoder to produce", params['outfile'])
 
 # build avi file from frames
 command = ('mencoder',

@@ -41,7 +41,7 @@ class Line:
     def crosspoint(self, line):
         # return crossing point if any
         if self.m == line.m:
-            print "warning: no crossing point between parallel lines\n  %s\n  %s" % (self, line)
+            print("warning: no crossing point between parallel lines\n  %s\n  %s" % (self, line))
             return (None, None)
         elif self.m == None:
             x = self.b
