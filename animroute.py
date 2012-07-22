@@ -444,19 +444,41 @@ def anim_op_route(duration, args):
 # frame: an image object containing the current frame
 # frame_no: the number of the last frame written to disk (not always up-to-date during anim operations)
 # last_frame_no: the number of the last frame written to disk
+# phase: what processing steps to perform
+#         1: parsing of config file
+#         2: process animation operators
+#         3: compile AVI file
 frame_no = 0
 last_frame_no = 0
 params = dict()
+phase  = 3
 
 # check for config file
 if len(sys.argv) < 2:
     abort("missing argument: configuration filename")
-params['configfile'] = sys.argv[1]
+
+while len(sys.argv) > 1:
+    a = sys.argv.pop(1)
+    if a == '-p':
+        phase = int(sys.argv.pop(1))
+    elif a == '-c':
+        params['configfile'] = sys.argv.pop(1)
+    elif a == '-h':
+        help()
+        sys.exit(0)
+    elif a[0] == '-':
+        abort("unknown parameter: " + a)
+    else:
+        params['configfile'] = a
+
+
+if not 'configfile' in params:
+    abort("missing argument: configuration filename")
 if not os.path.exists(params['configfile']):
     abort("config file not found'" + params['configfile'] + "'")
 
 # parse configuration file
-config_content = file(sys.argv[1], 'rt').read()
+config_content = file(params['configfile'], 'rt').read()
 ops = parse_config(config_content)
 
 # check for mandatory settings
@@ -503,6 +525,9 @@ for op in ops:
 #               MAIN  LOOP
 # =================================================
 
+if phase < 2:
+    abort("last phase reached: config file parsed")
+
 # process operators
 for op in ops:
     (name, duration, args) = op
@@ -520,8 +545,10 @@ for op in ops:
     else:
         abort("unknown operation " + name)
 
+if phase < 3:
+    abort("last phase reached: animation operators applied")
 
-# terminate progress line
+# complete progress line
 print ""
 print "running mencoder to produce", params['outfile']
 
