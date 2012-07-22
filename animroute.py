@@ -376,7 +376,6 @@ def anim_op_route(duration, args):
     color_triple='rgb(' + str(color)[1:-1] + ')'
     thickness = args.pop(0)
 
-    heading = []
     inertia   = 2 * pi / 360 * 5 # rotational inertia in radiant/frame
 
     if len(args) < 2:
@@ -384,6 +383,7 @@ def anim_op_route(duration, args):
 
     if len(args[0]) != 2:
         abort("route: third and later argument needs to be a point (x,y)")
+
     args[0] = map(lambda v: float(v), args[0])
 
     # measure distance between each pair of points
@@ -398,14 +398,15 @@ def anim_op_route(duration, args):
     draw = ImageDraw.Draw(frame)
 
     # initialize run values
-    pos      = args[0]
-    last_pos = pos
+    pos      = list(args[0])
+    last_pos = list(pos)
     heading  = direction(args[0], args[1])
 
     # loop over route points
     for i in range(1,len(args)):
         if len(args[i]) != 2:
             abort("route: third and later argument needs to be a point (x,y)")
+
         args[i] = map(lambda v: float(v), args[i])
 
         # how many frames to produce for this section
@@ -426,23 +427,17 @@ def anim_op_route(duration, args):
             pos[1] += heading[1]
 
             # draw
-            draw.ellipse(( 
-                int(pos[0]-thickness),
-                int(pos[1]-thickness),
-                int(pos[0]+thickness),
-                int(pos[1]+thickness) ), fill=color_triple)
-            #draw.line((map (lambda v: int(v), (
-            #    last_pos[0],
-            #    last_pos[1],
-            #    pos[0],
-            #    pos[1]))), fill=color_triple, width=thickness)
+            draw.line(( 
+                (int(last_pos[0]), int(last_pos[1])),
+                (int(pos[0]), int(pos[1]))
+            ), fill=color_triple, width=thickness)
 
             if frame_no % 20 == 0:
                 progress_update(frame_no-start_frame_no, frame_total, 'route')
 
-            print("anim_op_route: p(%d,%d->%d,%d) h(%.2f,%.2f) t(%d,%d) dis(%.2f)" % (last_pos[0], last_pos[1], pos[0], pos[1], heading[0], heading[1], args[i][0], args[i][1], distance(pos, args[i])))
+            #print("anim_op_route: p(%d,%d->%d,%d) h(%.2f,%.2f) t(%d,%d) dis(%.2f)" % (last_pos[0], last_pos[1], pos[0], pos[1], heading[0], heading[1], args[i][0], args[i][1], distance(pos, args[i])))
 
-            last_pos = pos
+            last_pos = list(pos)
             frame_no += 1
             write_frame(frame_no, frame)
        
