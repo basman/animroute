@@ -42,6 +42,7 @@ def parse_config(config):
             else:
                 args = list()
             operator_stack.append((operator, duration, args))
+            #print "anim_op_" + operator + " [" + str(duration) + "] " + str(args)
 
         else:
             abort("unknown config instruction " + token)
