@@ -407,7 +407,7 @@ def anim_op_route(duration, args):
         # the distance for each iteration
         distance_per_frame = distances[i] / frame_count
 
-        while int(pos[0]) != int(args[i][0]) or int(pos[1]) != int(args[i][1]):
+        while distance(pos,args[i]) >= distance_per_frame:
             if i == 1:
                 heading = direction(args[0], args[1])
             else:
