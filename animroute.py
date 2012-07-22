@@ -365,6 +365,8 @@ def anim_op_route(duration, args):
     global frame_no
     global params
 
+    start_frame_no = frame_no
+
     if len(args) < 4:
         abort("route: not enough arguments (color, thickness, pt1, pt2, ...)")
 
@@ -428,7 +430,9 @@ def anim_op_route(duration, args):
                 int(pos[0]+thickness),
                 int(pos[1]+thickness) ), fill=color_triple)
 
-            print "anim_op_route: p(%.2f,%.2f) h(%.2f,%.2f) t(%.2f,%.2f) dis(%.2f)" % (pos[0], pos[1], heading[0], heading[1], args[i][0], args[i][1], distance(pos, args[i]))
+            if frame_no % 20 == 0:
+                progress_update(frame_no-start_frame_no, frame_total, 'route')
+            print "anim_op_route: p(%d,%d) h(%.2f,%.2f) t(%d,%d) dis(%.2f)" % (pos[0], pos[1], heading[0], heading[1], args[i][0], args[i][1], distance(pos, args[i]))
 
             frame_no += 1
             write_frame(frame_no, frame)
