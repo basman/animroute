@@ -416,8 +416,21 @@ def anim_op_route(duration, args):
 
         # loop over interpolated points
         while distance(pos,args[i]) >= distance_per_frame:
-            # TODO turn direction towards next point, considering inertia
-            heading = direction(args[i-1], args[i])
+            # turn direction towards next point, considering inertia
+            target_heading = cartesian2polar(direction(pos, args[i]))[1]
+            current_heading = cartesian2polar(heading)[1]
+
+            if target_heading != current_heading:
+                bearing = angle(current_heading, target_heading)
+                if abs(bearing) <= inertia:
+                    current_heading += bearing
+                elif bearing > 0:
+                    current_heading += inertia
+                else:
+                    current_heading -= inertia
+
+                heading = polar2cartesian(current_heading)
+
 
             # rescale direction to correct step length
             heading = scale(heading, distance_per_frame)

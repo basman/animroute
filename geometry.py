@@ -2,6 +2,34 @@
 
 import math
 
+# compute angle between two angles
+def angle(phi1, phi2):
+    # FIXME always return smallest angle between the two phi
+    return phi2 - phi1
+
+# convert polar (phi, r=1) to cartesian (x, y)
+def polar2cartesian(phi, r=1.0):
+    x = r * math.cos(phi)
+    y = r * math.sin(phi)
+
+    return [ x, y ]
+
+# convert cartesian vector (x, y) to (r, angle)
+def cartesian2polar(v):
+    if v[0] == 0 and v[1] == 0:
+        abort("vector2polar: can't convert null vector")
+
+    r = math.sqrt(v[0]**2 + v[1]**2)
+
+    if v[0] != 0:
+        phi = math.atan2(v[1], v[0])
+    elif v[1] > 0:
+        phi = math.pi / 2
+    else:
+        phi = -math.pi / 2
+
+    return [ r, phi ]
+
 # compute gradient between two points
 # None means vertical
 def gradient(p1, p2):
@@ -22,7 +50,7 @@ def normalize(v):
 # scale a vector to match length
 def scale(v, l):
     div = distance((0,0), v)
-    return [v[0]/div*l, v[1]/div*l]
+    return [ v[0]/div*l, v[1]/div*l ]
 
 # return the distance between two points
 def distance(p1, p2):
