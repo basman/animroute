@@ -4,8 +4,13 @@ import math
 
 # compute angle between two angles
 def angle(phi1, phi2):
-    # FIXME always return smallest angle between the two phi
-    return phi2 - phi1
+    # always return smallest angle between the two phi
+    a = phi2 - phi1
+    if a > math.pi:
+        return phi2 - phi1 - math.pi*2
+    elif a < -math.pi:
+        return phi2 - phi1 + math.pi*2
+    return a
 
 # convert polar (phi, r=1) to cartesian (x, y)
 def polar2cartesian(phi, r=1.0):
