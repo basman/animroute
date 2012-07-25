@@ -452,7 +452,7 @@ def anim_op_route(duration, args):
             ), fill=color_triple, width=thickness)
 
             if frame_no % 20 == 0:
-                progress_update(frame_no-start_frame_no, frame_total, 'route')
+                progress_update(min(frame_no-start_frame_no, frame_total), frame_total, 'route')
 
             #print("anim_op_route: p(%d,%d->%d,%d) h(%.2f,%.2f) t(%d,%d) dis(%.2f)" % (last_pos[0], last_pos[1], pos[0], pos[1], heading[0], heading[1], args[i][0], args[i][1], distance(pos, args[i])))
 
@@ -460,6 +460,10 @@ def anim_op_route(duration, args):
             frame_no += 1
             frame_i  += 1
             write_frame(frame_no, frame)
+
+        # correct total frame count by extra iterations caused by the last curve
+        if frame_i > frame_count:
+            frame_total += frame_i - frame_count
        
     del(draw)
 
