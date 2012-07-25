@@ -376,8 +376,6 @@ def anim_op_route(duration, args):
     color_triple='rgb(' + str(color)[1:-1] + ')'
     thickness = args.pop(0)
 
-    inertia   = 2 * pi / 360 * 5 # rotational inertia in radiant/frame
-
     if len(args) < 2:
         abort("route: requires at least 2 points")
 
@@ -402,6 +400,8 @@ def anim_op_route(duration, args):
     last_pos = list(pos)
     heading  = direction(args[0], args[1])
 
+    base_inertia = 2 * pi / 360 * 5 # rotational inertia in radiant/frame
+
     # loop over route points
     for i in range(1,len(args)):
         if len(args[i]) != 2:
@@ -413,6 +413,8 @@ def anim_op_route(duration, args):
         frame_count = distances[i] / distance_sum * frame_total
         # the distance for each iteration
         distance_per_frame = distances[i] / frame_count
+        # local frame counter for current section
+        frame_i = 0
 
         # loop over interpolated points
         while distance(pos,args[i]) >= distance_per_frame:
@@ -422,6 +424,10 @@ def anim_op_route(duration, args):
 
             if target_heading != current_heading:
                 bearing = angle(current_heading, target_heading)
+
+                # start slow, then increase until the angle per frame is 2.5 fold
+                inertia = base_inertia * (1 + 1.5 * min(frame_i, 50) / 50)
+
                 if abs(bearing) <= inertia:
                     current_heading += bearing
                 elif bearing > 0:
@@ -452,6 +458,7 @@ def anim_op_route(duration, args):
 
             last_pos = list(pos)
             frame_no += 1
+            frame_i  += 1
             write_frame(frame_no, frame)
        
     del(draw)
