@@ -481,7 +481,7 @@ def anim_op_route(duration, args):
 #         2: process animation operators
 #         3: compile AVI file
 frame_no = 0
-last_frame_no = 0
+last_frame_no = -1
 params = dict()
 phase  = 3
 
@@ -559,6 +559,9 @@ for op in ops:
 
 if phase < 2:
     abort("last phase reached: config file parsed")
+
+# write first frame (required in case first op is pause)
+write_frame(frame_no, frame);
 
 # process operators
 for op in ops:
