@@ -13,7 +13,7 @@ import shlex
 from time import time
 from shutil import rmtree
 import Image, ImageDraw
-from math import pi
+from math import pi,asin
 from geometry import *
 
 # populate global config settings in dictionary params and
@@ -427,6 +427,8 @@ def anim_op_route(duration, args):
 
                 # start slow, then increase until the angle per frame is 2.5 fold
                 inertia = base_inertia * (1 + 1.5 * min(frame_i, 50) / 50)
+                # in case of near target, assure minimum agility
+                inertia = max(inertia, asin(distance_per_frame / distance(pos,args[i])))
 
                 if abs(bearing) <= inertia:
                     current_heading += bearing
