@@ -365,12 +365,11 @@ def anim_op_route(duration, args):
     global frame_no
     global params
 
-    start_frame_no = frame_no
-
     if len(args) < 4:
         abort("route: not enough arguments (color, thickness, pt1, pt2, ...)")
 
-    frame_total = int(duration * params['fps'])
+    frames_total = int(duration * params['fps'])
+    start_frame_no = frame_no
 
     color = args.pop(0)
     color_triple='rgb(' + str(color)[1:-1] + ')'
@@ -384,21 +383,15 @@ def anim_op_route(duration, args):
 
     args[0] = map(lambda v: float(v), args[0])
 
-    # measure distance between each pair of points
-    distances = [0]
-    distance_sum = 0
+    # STEP 1: compute pixels
 
-    for i in range(1,len(args)):
-        d = distance(args[i],args[i-1])
-        distances.append( d )
-        distance_sum += d
-
-    draw = ImageDraw.Draw(frame)
+    pixels = list()
 
     # initialize run values
     pos      = list(args[0])
-    last_pos = list(pos)
     heading  = direction(args[0], args[1])
+
+    pixels.append(list(pos))
 
     base_inertia = 2 * pi / 360 * 5 # rotational inertia in radiant/frame
 
@@ -409,15 +402,12 @@ def anim_op_route(duration, args):
 
         args[i] = map(lambda v: float(v), args[i])
 
-        # how many frames to produce for this section
-        frame_count = distances[i] / distance_sum * frame_total
         # the distance for each iteration
-        distance_per_frame = distances[i] / frame_count
-        # local frame counter for current section
-        frame_i = 0
+        distance_per_step = 2.0
+        step_i = 0
 
-        # loop over interpolated points
-        while distance(pos,args[i]) >= distance_per_frame:
+        # walk towards next route point
+        while distance(pos,args[i]) >= distance_per_step:
             # turn direction towards next point, considering inertia
             target_heading = cartesian2polar(direction(pos, args[i]))[1]
             current_heading = cartesian2polar(heading)[1]
@@ -426,9 +416,9 @@ def anim_op_route(duration, args):
                 bearing = angle(current_heading, target_heading)
 
                 # start slow, then increase until the angle per frame is 2.5 fold
-                inertia = base_inertia * (1 + 1.5 * min(frame_i, 50) / 50)
+                inertia = base_inertia * (1 + 1.5 * min(step_i, 50) / 50)
                 # in case of near target, assure minimum agility
-                inertia = max(inertia, asin(distance_per_frame / distance(pos,args[i])))
+                inertia = max(inertia, asin(distance_per_step / distance(pos,args[i])))
 
                 if abs(bearing) <= inertia:
                     current_heading += bearing
@@ -441,32 +431,56 @@ def anim_op_route(duration, args):
 
 
             # rescale direction to correct step length
-            heading = scale(heading, distance_per_frame)
+            heading = scale(heading, distance_per_step)
 
             # move towards next point
             pos[0] += heading[0]
             pos[1] += heading[1]
 
-            # draw
-            draw.line(( 
-                (int(last_pos[0]), int(last_pos[1])),
-                (int(pos[0]), int(pos[1]))
-            ), fill=color_triple, width=thickness)
+            # store current position into pixel list
+            pixels.append(list(pos))
+            # append index of current waypoint to position vector for debugging
+            pixels[-1].append(i)
+            step_i  += 1
+
+    # STEP 2: draw
+
+    draw = ImageDraw.Draw(frame)
+
+    if len(pixels) < frames_total:
+        abort("too few pixels found for given route (reduce framerate)")
+        # ...or replace static distance_per_step above; or make FIXME below work both ways
+
+    # FIXME: shift frames onto last pixel and handle fraktional numbers (bad example: 551/300=1)
+    steps_per_frame = int(len(pixels) / frames_total)
+    #print "route debug: %d pixels, %d frames_total, %d steps per frame" % (len(pixels), frames_total, steps_per_frame)
+
+    for i in range(1,len(pixels)):
+        last_pos = pixels[i-1]
+        pos = pixels[i]
+
+        # draw
+        draw.line(( 
+            (int(last_pos[0]), int(last_pos[1])),
+            (int(pos[0]), int(pos[1]))
+        ), fill=color_triple, width=thickness)
+
+        #print("anim_op_route: p(%d,%d->%d,%d) t(%d,%d [%d]) dis(%.2f)" % \
+        #    (last_pos[0], last_pos[1], pos[0], pos[1], args[pos[2]][0], args[pos[2]][1], pos[2], \
+        #     distance(pos, args[-1]))),
+
+        if i % steps_per_frame == 0:
 
             if frame_no % 20 == 0:
-                progress_update(min(frame_no-start_frame_no, frame_total), frame_total, 'route')
+                progress_update(frame_no-start_frame_no, frames_total, 'route')
 
-            #print("anim_op_route: p(%d,%d->%d,%d) h(%.2f,%.2f) t(%d,%d) dis(%.2f)" % (last_pos[0], last_pos[1], pos[0], pos[1], heading[0], heading[1], args[i][0], args[i][1], distance(pos, args[i])))
-
-            last_pos = list(pos)
             frame_no += 1
-            frame_i  += 1
             write_frame(frame_no, frame)
 
-        # correct total frame count by extra iterations caused by the last curve
-        if frame_i > frame_count:
-            frame_total += frame_i - frame_count
-       
+        #    print " [frame%d]" % (frame_no-start_frame_no)
+        #else:
+        #    print ""
+
     del(draw)
 
 # ===============================================================
