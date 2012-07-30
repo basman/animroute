@@ -395,6 +395,9 @@ def anim_op_route(duration, args):
 
     base_inertia = 2 * pi / 360 * 5 # rotational inertia in radiant/frame
 
+    # the distance for each iteration
+    distance_per_step = 2.2
+
     # loop over route points
     for i in range(1,len(args)):
         if len(args[i]) != 2:
@@ -402,8 +405,6 @@ def anim_op_route(duration, args):
 
         args[i] = map(lambda v: float(v), args[i])
 
-        # the distance for each iteration
-        distance_per_step = 2.0
         step_i = 0
 
         # walk towards next route point
@@ -447,14 +448,10 @@ def anim_op_route(duration, args):
 
     draw = ImageDraw.Draw(frame)
 
-    if len(pixels) < frames_total:
-        abort("too few pixels found for given route (reduce framerate)")
-        # ...or replace static distance_per_step above; or make FIXME below work both ways
+    frames_per_step = float(frames_total) / len(pixels) 
+    #print "route debug: %d pixels, %d frames_total, %d frames per pixel" % (len(pixels), frames_total, frames_per_step)
 
-    # FIXME: shift frames onto last pixel and handle fraktional numbers (bad example: 551/300=1)
-    steps_per_frame = int(len(pixels) / frames_total)
-    #print "route debug: %d pixels, %d frames_total, %d steps per frame" % (len(pixels), frames_total, steps_per_frame)
-
+    frame_i = 1
     for i in range(1,len(pixels)):
         last_pos = pixels[i-1]
         pos = pixels[i]
@@ -467,21 +464,19 @@ def anim_op_route(duration, args):
 
         #print("anim_op_route: p(%d,%d->%d,%d) t(%d,%d [%d]) dis(%.2f)" % \
         #    (last_pos[0], last_pos[1], pos[0], pos[1], args[pos[2]][0], args[pos[2]][1], pos[2], \
-        #     distance(pos, args[-1]))),
+        #     distance(pos, args[-1])))
 
-        if i % steps_per_frame == 0:
+        while frame_i/i <= frames_per_step:
 
-            if frame_no % 20 == 0:
-                progress_update(frame_no-start_frame_no, frames_total, 'route')
+            if frame_i % 20 == 0:
+                progress_update(frame_i, frames_total, 'route')
 
-            frame_no += 1
-            write_frame(frame_no, frame)
+            write_frame(frame_no+frame_i, frame)
+            frame_i += 1
 
-        #    print " [frame%d]" % (frame_no-start_frame_no)
-        #else:
-        #    print ""
-
+    progress_update(frame_i, frames_total, 'route')
     del(draw)
+    frame_no += frame_i-1
 
 # ===============================================================
 #              MAIN  PROGRAM
