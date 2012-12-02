@@ -448,8 +448,8 @@ def anim_op_route(duration, args):
 
     draw = ImageDraw.Draw(frame)
 
-    frames_per_step = float(frames_total) / len(pixels) 
-    #print "route debug: %d pixels, %d frames_total, %d frames per pixel" % (len(pixels), frames_total, frames_per_step)
+    frames_per_px = float(frames_total) / len(pixels) 
+    #print "route debug: %d pixels, %d frames_total, %d frames per pixel" % (len(pixels), frames_total, frames_per_px)
 
     frame_i = 1
     for i in range(1,len(pixels)):
@@ -466,7 +466,7 @@ def anim_op_route(duration, args):
         #    (last_pos[0], last_pos[1], pos[0], pos[1], args[pos[2]][0], args[pos[2]][1], pos[2], \
         #     distance(pos, args[-1])))
 
-        while frame_i/i <= frames_per_step:
+        while frame_i/i <= frames_per_px:
 
             if frame_i % 20 == 0:
                 progress_update(frame_i, frames_total, 'route')
