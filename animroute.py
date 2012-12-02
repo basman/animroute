@@ -466,7 +466,7 @@ def anim_op_route(duration, args):
         #    (last_pos[0], last_pos[1], pos[0], pos[1], args[pos[2]][0], args[pos[2]][1], pos[2], \
         #     distance(pos, args[-1])))
 
-        while frame_i/i <= frames_per_px:
+        while float(frame_i)/i <= frames_per_px:
 
             if frame_i % 20 == 0:
                 progress_update(frame_i, frames_total, 'route')
